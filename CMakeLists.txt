@@ -13,22 +13,19 @@ project ("Comm_DLL")
 
 
 # 将源代码添加到此项目的可执行文件。
-add_library(Comm_DLL "ADSComm.cpp" "TCPModbusComm.cpp")
+add_library(Comm_DLL SHARED "ADSComm.cpp" "ADSComm.h" "TCPModbusComm.cpp")
 
 
-# 设置目标的包含目录
+# ADS
 target_include_directories(Comm_DLL PRIVATE ${CMAKE_SOURCE_DIR}/ThirdParty/ADS/TcAdsDll/Include)
-
-# 链接库文件
 target_link_libraries(Comm_DLL PRIVATE ${CMAKE_SOURCE_DIR}/ThirdParty/ADS/TcAdsDll/x64/lib/TcAdsDll.lib)
-
+add_custom_command(TARGET Comm_DLL POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                  "${CMAKE_SOURCE_DIR}/ThirdParty/ADS/TcAdsDll/x64/TcAdsDll.dll"
+                   $<TARGET_FILE_DIR:Comm_DLL>)
+#  Modbus-TCP
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET Comm_DLL PROPERTY CXX_STANDARD 20)
 endif()
 
-# 复制 TcAdsDll.dll 到输出目录
-add_custom_command(TARGET Comm_DLL POST_BUILD
-                   COMMAND ${CMAKE_COMMAND} -E copy
-                   "${CMAKE_SOURCE_DIR}/ThirdParty/ADS/TcAdsDll/x64/lib/TcAdsDll.dll"
-                   $<TARGET_FILE_DIR:Comm_DLL>)

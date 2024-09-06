@@ -8,9 +8,46 @@
 #endif
 
 #include <string>
+#include <iostream>
+#include <windows.h>
+#include <any>
+#include <mutex>
 
 #include "TcAdsDef.h"
 #include "TcAdsApi.h"
+
+using namespace std;
+
+
+struct ADSDataType
+{
+    std::string var_name;        
+    unsigned long handle = 0;    
+    unsigned int dim = 0;        
+    void* val;                
+
+    // 构造函数
+    ADSDataType() = default;
+
+    // 带参数的构造函数
+    ADSDataType(const std::string& name, unsigned long h, unsigned int d)
+        : var_name(name), handle(h), dim(d), val(nullptr) {}
+
+    // 析构函数，确保释放 val
+    ~ADSDataType() {
+        reset();  // 释放 val
+    }
+    void reset() {
+        if (val)
+        {
+            free(val);
+            val = nullptr;  // 重置为 nullptr
+        }
+        var_name.clear();
+        handle = 0;
+        dim = 0;
+    }
+};
 
 class ADSCOMM_API ADSComm
 {
@@ -19,32 +56,26 @@ public:
     ADSComm();
     ~ADSComm();
 
-    // 初始化方法，通常包括设置通信参数
-    int ADS_init(const std::string& ip, int port);
-
-    // 连接到 ADS 设备
-    bool Connect();
-
-    // 断开连接
-    void Disconnect();
-
-    // 读取数据的方法
-    bool ReadData(const std::string& variableName, void* buffer, int bufferSize);
-
-    // 写入数据的方法
-    bool WriteData(const std::string& variableName, const void* data, int dataSize);
-
-    // 检查连接状态
-    bool IsConnected() const;
-
+    //
+    bool ADS_init(const string& ip = "192.168.2.200.1.1", int port = AMSPORT_R0_PLC_RTS1);
+    template <typename T>
+    bool ADS_readPara(const string& parameter, T& value);
+    template <typename T>
+    bool ADS_writePara(const string& parameter, T& value);
 private:
-    AdsVersion* pDLLVersion;
-    std::string m_ip; // 设备IP地址
-    int m_port;       // 设备端口号
-    bool m_isConnected; // 连接状态
+    string ADS_error(int);
 
-    // 私有辅助方法，可以在这里添加内部实现细节
-    bool SetupConnection();
+public:
+    USHORT          nAdsState;	
+    USHORT          nDeviceState;
+
+    AmsAddr         Addr;
+    long            nErr;
+    long            nPort;
+    AdsVersion*     pDLLVersion;
+private:
+    std::mutex      mtx;
+    ADSDataType     dataADS;
 };
 
 #endif // ADSCOMM_H
