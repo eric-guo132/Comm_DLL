@@ -13,7 +13,7 @@ project ("Comm_DLL")
 
 
 # 将源代码添加到此项目的可执行文件。
-add_library(Comm_DLL SHARED "ADSComm.cpp" "ADSComm.h" "TCPModbusComm.cpp")
+add_library(Comm_DLL SHARED "ADSComm.cpp" "ADSComm.h" "TCPModbusComm.cpp" "CommBase.h")
 
 
 # ADS
