@@ -10,7 +10,6 @@
 #include <string>
 #include <iostream>
 #include <windows.h>
-#include <any>
 #include <mutex>
 
 #include "TcAdsDef.h"
@@ -24,7 +23,7 @@ struct ADSDataType
     std::string var_name;        
     unsigned long handle = 0;    
     unsigned int dim = 0;        
-    void* val;                
+    void* val = nullptr;
 
     // 构造函数
     ADSDataType() = default;
@@ -35,17 +34,11 @@ struct ADSDataType
 
     // 析构函数，确保释放 val
     ~ADSDataType() {
-        reset();  // 释放 val
-    }
-    void reset() {
         if (val)
         {
             free(val);
             val = nullptr;  // 重置为 nullptr
         }
-        var_name.clear();
-        handle = 0;
-        dim = 0;
     }
 };
 
@@ -87,7 +80,37 @@ public:
      *       The parameter name must be valid and accessible in the ADS device.
      */
     template <typename T>
-    bool ADS_readPara(const string& parameter, T& value);
+    bool ADS_readPara(const string& para_name, T& value)
+    {
+        lock_guard<std::mutex> guard(mtx);
+
+        ADSDataType dataADS;
+        dataADS.var_name = para_name;
+
+        if (nAdsState != 1)
+        {
+            return false;
+        }
+
+        if (AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]))
+        {
+            cerr << ADS_error(nErr) << endl;
+            return false;
+        }
+
+        dataADS.val = malloc(sizeof(T));
+        ULONG readnb = 0;
+        if (AdsSyncReadReqEx(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(T), dataADS.val, &readnb))
+        {
+            cerr << ADS_error(nErr) << endl;
+            return false;
+        }
+
+        value = *reinterpret_cast<T*>(dataADS.val);
+
+        //dataADS.reset();
+        return true;
+    }
 
     /**
      * @brief Writes a value to the specified parameter on the ADS device.
@@ -106,7 +129,32 @@ public:
      *       The parameter name must be valid and writable on the ADS device.
      */
     template <typename T>
-    bool ADS_writePara(const string& parameter, T& value);
+    bool ADS_writePara(const string& para_name, T& value)
+    {
+        lock_guard<std::mutex> guard(mtx);
+        
+        ADSDataType dataADS;
+        dataADS.var_name = para_name;
+        
+        if (nAdsState != 1)
+        {
+            return false;
+        }
+        nErr = AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]);
+        if (nErr)
+        {
+            cerr << ADS_error(nErr) << endl;
+            return false;
+        }
+        
+        nErr = AdsSyncWriteReq(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(value), &value);
+        if (nErr)
+        {
+            cerr << ADS_error(nErr) << endl;
+            return false;
+        }
+        return true;
+    }
 private:
     string ADS_error(int);
 
@@ -120,7 +168,6 @@ public:
     AdsVersion*     pDLLVersion;
 private:
     std::mutex      mtx;
-    ADSDataType     dataADS;
 };
 
 #endif // ADSCOMM_H
