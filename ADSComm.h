@@ -54,14 +54,15 @@ public:
      *
      * This function is used to establish an ADS communication connection with the specified IP address and port.
      *
-     * @param ip  The IP address of the target device. The default value is "192.168.2.200.1.1".
-     * @param port  The port number of the target device. The default value is AMSPORT_R0_PLC_RTS1.
+     * @param ip  The IP address of the target device. The IP must be expressed entirely in numbers and is divided into 6 parts by 5 "." ,The default value is "192.168.2.200.1.1".
+     * @param port  The port number of the target device. The default value is AMSPORT_R0_PLC_TC3.
      *
-     * @return bool  Returns true if the initialization is successful; false indicates failure.
-     *              The error code can be further interpreted using the ADS_error function.
+     * @return int  Returns 0 if the initialization is successful;
+     *              Returns 11 indicates failed to get adsport;
+     *              Returns 22 indicates ip format error;
      *
      */
-    bool ADS_init(const string& ip = "192.168.2.100.1.1", int port = AMSPORT_R0_PLC_TC3);
+    int ADS_init(const string& address = "192.168.2.100.1.1", int port = AMSPORT_R0_PLC_TC3);
 
     /**
      * @brief Reads a parameter from the ADS device and stores it in the provided variable.

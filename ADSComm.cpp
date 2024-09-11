@@ -27,7 +27,7 @@ ADSComm::~ADSComm()
     }
 }
 
-bool ADSComm::ADS_init(const std::string& address, int port)
+int ADSComm::ADS_init(const std::string& address, int port)
 {
     long AdxDllVersion = AdsGetDllVersion();
 
@@ -41,6 +41,7 @@ bool ADSComm::ADS_init(const std::string& address, int port)
     else
     {
         cout << "Port" << nPort << "opening failed" << endl;
+        return 11;
     }
 
 	//	get ip from string
@@ -61,7 +62,7 @@ bool ADSComm::ADS_init(const std::string& address, int port)
 	else 
 	{
 		std::cerr << "The IP address is not in the correct format and cannot be split into 6 segments!" << std::endl;
-		return false;
+		return 22;
 	}
     Addr.port = port;
 	AdsSyncSetTimeout(500);
