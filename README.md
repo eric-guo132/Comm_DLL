@@ -4,6 +4,8 @@
 
 Version : 1.0.1
 
+仅支持生成X64的dll
+
 ***
 ## ADSComm (ADS模块)
 ### 接口说明
