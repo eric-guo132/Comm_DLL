@@ -15,19 +15,7 @@ ADSComm::ADSComm()
     nPort = 0;
 
     pDLLVersion = nullptr;
-    long AdxDllVersion = AdsGetDllVersion();
-
-    pDLLVersion = (AdsVersion*)&AdxDllVersion;
-
-    nPort = AdsPortOpen();
-    if (nPort)
-    {
-        cout << "Port" << nPort << "opening OK" << endl;
-    }
-    else
-    {
-        cout << "Port" << nPort << "opening failed" << endl;
-    }
+ 
 }
 
 ADSComm::~ADSComm()
@@ -41,6 +29,20 @@ ADSComm::~ADSComm()
 
 bool ADSComm::ADS_init(const std::string& address, int port)
 {
+    long AdxDllVersion = AdsGetDllVersion();
+
+    pDLLVersion = (AdsVersion*)&AdxDllVersion;
+
+    nPort = AdsPortOpen();
+    if (nPort)
+    {
+        cout << "Port" << nPort << "opening OK" << endl;
+    }
+    else
+    {
+        cout << "Port" << nPort << "opening failed" << endl;
+    }
+
 	//	get ip from string
 	std::stringstream ss(address); 
 	std::string segment;      
@@ -61,6 +63,7 @@ bool ADSComm::ADS_init(const std::string& address, int port)
 		std::cerr << "The IP address is not in the correct format and cannot be split into 6 segments!" << std::endl;
 		return false;
 	}
+    Addr.port = port;
 	AdsSyncSetTimeout(500);
 
 	auto start_time = std::chrono::steady_clock::now();
@@ -75,7 +78,11 @@ bool ADSComm::ADS_init(const std::string& address, int port)
 		auto elapsed_time = std::chrono::steady_clock::now() - start_time;
 		elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed_time).count();
 
-		if (elapsed_seconds >= 120.0)
+        if (GetAsyncKeyState(VK_F1) & 0x8000) {  // 0x8000 表示按键状态为按下
+            break;  // 用户按下 F1 键，中断循环
+        }
+
+		if (elapsed_seconds >= 60.0)
 		{
 			break;
 		}

@@ -61,7 +61,7 @@ public:
      *              The error code can be further interpreted using the ADS_error function.
      *
      */
-    bool ADS_init(const string& ip = "192.168.2.200.1.1", int port = AMSPORT_R0_PLC_RTS1);
+    bool ADS_init(const string& ip = "192.168.2.100.1.1", int port = AMSPORT_R0_PLC_TC3);
 
     /**
      * @brief Reads a parameter from the ADS device and stores it in the provided variable.
@@ -87,7 +87,7 @@ public:
         ADSDataType dataADS;
         dataADS.var_name = para_name;
 
-        if (nAdsState != 1)
+        if (nAdsState != 5)
         {
             return false;
         }
@@ -136,7 +136,7 @@ public:
         ADSDataType dataADS;
         dataADS.var_name = para_name;
         
-        if (nAdsState != 1)
+        if (nAdsState != 5)
         {
             return false;
         }
