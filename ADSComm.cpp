@@ -93,13 +93,13 @@ int ADSComm::ADS_init(const std::string& address, int port)
 	if (nErr)
 	{
         cerr << ADS_error(nErr) << endl;
-		return false;
+		return nErr;
 	}
 
 	if (nAdsState == 11001)
 	{
 		cerr << "Unable to find PLC/ADS system" << endl;
-		return false;
+		return 1;
 	}
 
 	if (nAdsState != ADSSTATE_RUN) //&& nDeviceState != ADSSTATE_STOP )
@@ -108,10 +108,10 @@ int ADSComm::ADS_init(const std::string& address, int port)
 		if (nErr)
 		{
             cerr << ADS_error(nErr) << endl;
-			return false;
+			return nErr;
 		}	
 	}
-	return true;
+	return 0;
 }
 
 //template <typename T>
