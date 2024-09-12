@@ -43,7 +43,7 @@ Version : 1.0.1
 
 ##### 示例
 	ADSComm test;
-	if (test.ADS_init())
+	if (!test.ADS_init())
 	{
 		cout << " Success to connect the device " << endl;
 	}
