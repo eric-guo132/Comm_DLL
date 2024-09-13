@@ -20,10 +20,13 @@ ADSComm::ADSComm()
 
 ADSComm::~ADSComm()
 {
-    int nErr = AdsPortClose();
-    if (nErr)
+    if (nPort)
     {
-        cerr << ADS_error(nErr) << endl;
+        nErr = AdsPortClose();
+        if (nErr)
+        {
+            cerr << ADS_error(nErr) << endl;
+        }
     }
 }
 
@@ -41,7 +44,7 @@ int ADSComm::ADS_init(const std::string& address, int port)
     else
     {
         cout << "Port" << nPort << "opening failed" << endl;
-        return 11;
+        return 18;
     }
 
 	//	get ip from string
@@ -62,7 +65,7 @@ int ADSComm::ADS_init(const std::string& address, int port)
 	else 
 	{
 		std::cerr << "The IP address is not in the correct format and cannot be split into 6 segments!" << std::endl;
-		return 22;
+		return 7;
 	}
     Addr.port = port;
 	AdsSyncSetTimeout(500);
@@ -92,14 +95,13 @@ int ADSComm::ADS_init(const std::string& address, int port)
 
 	if (nErr)
 	{
-        cerr << ADS_error(nErr) << endl;
 		return nErr;
 	}
 
 	if (nAdsState == 11001)
 	{
 		cerr << "Unable to find PLC/ADS system" << endl;
-		return 1;
+		return 1799;
 	}
 
 	if (nAdsState != ADSSTATE_RUN) //&& nDeviceState != ADSSTATE_STOP )
@@ -107,74 +109,12 @@ int ADSComm::ADS_init(const std::string& address, int port)
 		nErr = AdsSyncWriteControlReq(&Addr, ADSSTATE_RUN, nDeviceState, 0, NULL);
 		if (nErr)
 		{
-            cerr << ADS_error(nErr) << endl;
 			return nErr;
 		}	
 	}
 	return 0;
 }
 
-//template <typename T>
-//bool ADSComm::ADS_readPara(const string& para_name, T& value)
-//{
-//	lock_guard<std::mutex> guard(mtx);
-//
-//	dataADS.var_name = para_name;
-//
-//	if (nAdsState != 1)
-//	{
-//		return false;
-//	}
-//	
-//	if (AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]))
-//	{
-//		cerr << ADS_error(nErr) << endl;
-//		return false;
-//	}
-//
-//    dataADS.val = malloc(sizeof(T));
-//    ULONG readnb = 0;
-//    if (AdsSyncReadReqEx(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(T), dataADS.val, &readnb))
-//    {
-//        cerr << ADS_error(nErr) << endl;
-//        return false;
-//    }
-//
-//    value = *reinterpret_cast<T*>(dataADS.val);
-//
-//    dataADS.reset();
-//    return true;
-//}
-
-//template <typename T>
-//bool ADSComm::ADS_writePara(const string& para_name, T& value)
-//{
-//    lock_guard<std::mutex> guard(mtx);
-//
-//    dataADS.var_name = para_name;
-//
-//    if (nAdsState != 1)
-//    {
-//        return false;
-//    }
-//    nErr = AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]);
-//    if (nErr)
-//    {
-//        cerr << ADS_error(nErr) << endl;
-//        return false;
-//    }
-//
-//    dataADS.val = malloc(sizeof(T));
-//    ULONG readnb = 0;
-//    nErr = AdsSyncWriteReqEx(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(T), dataADS.val, &readnb);
-//    if (nErr)
-//    {
-//        cerr << ADS_error(nErr) << endl;
-//        return false;
-//    }
-//    dataADS.reset();
-//    return true;
-//}
 
 string ADSComm::ADS_error(int)
 {

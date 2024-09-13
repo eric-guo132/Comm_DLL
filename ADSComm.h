@@ -50,7 +50,7 @@ public:
     ~ADSComm();
 
     /**
-     * @brief Initializes the ADS communication connection.
+     * @brief Initializes the ADS communication connection.It will return a nonezero errorValue if it failed, and we can get more datailed information by using "  ADS_error(errorValue)" .
      *
      * This function is used to establish an ADS communication connection with the specified IP address and port.
      *
@@ -58,14 +58,14 @@ public:
      * @param port  The port number of the target device. The default value is AMSPORT_R0_PLC_TC3.
      *
      * @return int  Returns 0 if the initialization is successful;
-     *              Returns 11 indicates failed to get adsport;
-     *              Returns 22 indicates ip format error;
+     *              Returns a nonezero errorValue if error happened.
      *
      */
     int ADS_init(const string& address = "192.168.2.100.1.1", int port = AMSPORT_R0_PLC_TC3);
 
     /**
-     * @brief Reads a parameter from the ADS device and stores it in the provided variable.
+     * @brief Reads a parameter from the ADS device and stores it in the provided variable. It will return a nonezero errorValue if it failed, and we can get more datailed information by using "  ADS_error(errorValue)" .
+     *       
      *
      * This function reads a parameter with the specified name from the ADS device and stores the result in the provided variable of type `T`.
      *
@@ -74,14 +74,14 @@ public:
      * @param parameter  The name of the parameter to read from the ADS device.
      * @param value  The reference to a variable where the read value will be stored.
      *
-     * @return bool  Returns true if the parameter is successfully read and stored in `value`.
-     *               Returns false if there is an error during the read operation.
+     * @return int  Returns 0 if the parameter is successfully read and stored in `value`.
+     *              Returns a nonezero errorValue if error happened.
      *
      * @note Ensure that the type `T` is compatible with the parameter being read from the ADS device.
      *       The parameter name must be valid and accessible in the ADS device.
      */
     template <typename T>
-    bool ADS_readPara(const string& para_name, T& value)
+    int ADS_readPara(const string& para_name, T& value)
     {
         lock_guard<std::mutex> guard(mtx);
 
@@ -90,31 +90,27 @@ public:
 
         if (nAdsState != 5)
         {
-            return false;
+            return 1799;
         }
-
-        if (AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]))
+        nErr = AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]);
+        if (nErr)
         {
-            cerr << ADS_error(nErr) << endl;
-            return false;
+            return nErr;
         }
 
         dataADS.val = malloc(sizeof(T));
         ULONG readnb = 0;
-        if (AdsSyncReadReqEx(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(T), dataADS.val, &readnb))
+        nErr = AdsSyncReadReqEx(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(T), dataADS.val, &readnb);
+        if (nErr)
         {
-            cerr << ADS_error(nErr) << endl;
-            return false;
+            return nErr;
         }
-
         value = *reinterpret_cast<T*>(dataADS.val);
-
-        //dataADS.reset();
-        return true;
+        return 0;
     }
 
     /**
-     * @brief Writes a value to the specified parameter on the ADS device.
+     * @brief Writes a value to the specified parameter on the ADS device. It will return a nonezero errorValue if it failed, and we can get more datailed information by using "  ADS_error(errorValue)" .
      *
      * This function writes the provided value of type `T` to the parameter with the specified name on the ADS device.
      *
@@ -123,14 +119,14 @@ public:
      * @param parameter  The name of the parameter to which the value will be written.
      * @param value  The reference to the value that will be written to the parameter.
      *
-     * @return bool  Returns true if the value is successfully written to the ADS device.
-     *               Returns false if there is an error during the write operation.
+     * @return bool  Returns 0 if the value is successfully written to the ADS device.
+     *               Returns a nonezero errorValue if error happened.
      *
      * @note Ensure that the type `T` is compatible with the parameter being written to the ADS device.
      *       The parameter name must be valid and writable on the ADS device.
      */
     template <typename T>
-    bool ADS_writePara(const string& para_name, T& value)
+    int ADS_writePara(const string& para_name, T& value)
     {
         lock_guard<std::mutex> guard(mtx);
         
@@ -139,25 +135,23 @@ public:
         
         if (nAdsState != 5)
         {
-            return false;
+            return 1799;
         }
         nErr = AdsSyncReadWriteReq(&Addr, ADSIGRP_SYM_HNDBYNAME, 0x0, sizeof(dataADS.handle), &dataADS.handle, strlen(dataADS.var_name.c_str()), &dataADS.var_name[0]);
         if (nErr)
         {
-            cerr << ADS_error(nErr) << endl;
-            return false;
+            return nErr;
         }
         
         nErr = AdsSyncWriteReq(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, sizeof(value), &value);
         if (nErr)
         {
-            cerr << ADS_error(nErr) << endl;
-            return false;
+            return nErr;
         }
-        return true;
+        return 0;
     }
-private:
-    string ADS_error(int);
+public:
+    string ADS_error(int errorValue);
 
 public:
     USHORT          nAdsState;	
