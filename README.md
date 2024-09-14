@@ -42,6 +42,17 @@ Version : 1.0.1
 		int类型	 0 表示成功， 其他数字为错误码,表示失败	
 
 
+#### int ADSComm::ADS_register_trigger_callback(int triggerCount)
+##### 说明：
+		注册trigger的通知，析构函数中自动取消trigger的通知，对应的值放在全局变量 vector<int> triggerLabel;
+		成功返回零，失败返回错误码，使用“ ADS_error(errorValue)”获取详细的错误信息
+##### 输入：
+		triggerCount  trigger的总数;
+		
+##### 返回值：
+		int类型	 0 表示成功， 其他数字为错误码,表示失败	
+		
+
 #### string ADS_error(int errorValue);
 ##### 说明：
 		根据错误码返回详细的错误信息

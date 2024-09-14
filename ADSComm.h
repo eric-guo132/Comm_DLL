@@ -1,22 +1,26 @@
 ﻿#ifndef ADSCOMM_H
 #define ADSCOMM_H
 
-#ifdef _WIN32
-#define ADSCOMM_API __declspec(dllexport) // 导出
+#ifdef ADSCOMM_EXPORT
+    #define ADSCOMM_API __declspec(dllexport) // 导出
 #else
-#define ADSCOMM_API
+    #define ADSCOMM_API __declspec(dllimport)
 #endif
 
 #include <string>
 #include <iostream>
 #include <windows.h>
 #include <mutex>
+#include <vector>
 
 #include "TcAdsDef.h"
 #include "TcAdsApi.h"
 
 using namespace std;
 
+ADSCOMM_API extern vector<int> triggerLabel;
+
+void _stdcall ADS_callback(AmsAddr* Addr, AdsNotificationHeader* pNotification, ULONG hUser);
 
 struct ADSDataType
 {
@@ -151,6 +155,8 @@ public:
         return 0;
     }
 public:
+    int ADS_register_trigger_callback(int triggerCount);
+
     string ADS_error(int errorValue);
 
 public:
@@ -162,6 +168,10 @@ public:
     long            nPort;
     AdsVersion*     pDLLVersion;
 private:
+    ULONG           hTriggerNotification;
+    ULONG           hUser;
+    AdsNotificationAttrib triggerNotification;
+
     std::mutex      mtx;
 };
 

@@ -3,9 +3,10 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("Comm_DLL" VERSION 1.0.1)
 
-
 # 将源代码添加到此项目的可执行文件。
 add_library(Comm_DLL SHARED "ADSComm.cpp" "ADSComm.h" "ModbusTCP.cpp" "ModbusTCP.h")
+
+target_compile_definitions(Comm_DLL PRIVATE ADSCOMM_EXPORT)
 
 # 判断是否为 64 位架构
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)

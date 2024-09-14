@@ -5,7 +5,7 @@
 #include <chrono>
 #include <thread> 
 
-
+ADSCOMM_API vector<int> triggerLabel;
 
 ADSComm::ADSComm()
 {
@@ -13,6 +13,7 @@ ADSComm::ADSComm()
     nDeviceState = 0;
     nErr = 0;
     nPort = 0;
+    hTriggerNotification = 0;
 
     pDLLVersion = nullptr;
  
@@ -20,6 +21,13 @@ ADSComm::ADSComm()
 
 ADSComm::~ADSComm()
 {
+    // 在析构函数中取消通知
+    if (hTriggerNotification) {
+        nErr = AdsSyncDelDeviceNotificationReq(&Addr, hTriggerNotification);
+        if (nErr) {
+            std::cerr << "Error removing ADS notification: " << nErr << std::endl;
+        }
+    }
     if (nPort)
     {
         nErr = AdsPortClose();
@@ -116,9 +124,42 @@ int ADSComm::ADS_init(const std::string& address, int port)
 }
 
 
-string ADSComm::ADS_error(int)
+int ADSComm::ADS_register_trigger_callback(int triggerCount)
 {
-    switch (nErr)
+    triggerLabel.resize(triggerCount);
+
+    triggerNotification.cbLength = sizeof(triggerCount);
+    triggerNotification.nTransMode = ADSTRANS_SERVERONCHA;
+    triggerNotification.nMaxDelay = 10000; // 1ms (unit=0.1us)
+    triggerNotification.nCycleTime = 10000; // 1ms (unit=0.1us)
+
+    hUser = 123456;
+
+    ADSDataType dataADS;
+    dataADS.var_name = "PRODUCT_FLOW.TRIGGER_LABEL";
+    dataADS.dim = sizeof(triggerLabel);
+
+    nErr = ADS_readPara(dataADS.var_name, dataADS.val);
+    if (nErr)
+    {
+        return nErr;
+    }
+    nErr = AdsSyncAddDeviceNotificationReq(&Addr, ADSIGRP_SYM_VALBYHND, dataADS.handle, &triggerNotification, ADS_callback, hUser, &hTriggerNotification);
+    if (nErr)
+    {
+        return nErr;
+    }
+    return 0;
+}
+
+void _stdcall ADS_callback(AmsAddr* Addr, AdsNotificationHeader* pNotification, ULONG hUser)
+{
+    memcpy(triggerLabel.data(), pNotification->data, pNotification->cbSampleSize);
+}
+
+string ADSComm::ADS_error(int errorValue)
+{
+    switch (errorValue)
     {
     case 1:
         return("Internal error");
